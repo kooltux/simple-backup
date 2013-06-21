@@ -51,5 +51,6 @@ fi
 
 # push last backup to secondary if defined
 if [[ -n "$BACKUP_SECONDARY_SERVER" ]]; then
+	info "Sending backup to seconday server $BACKUP_SECONDARY_SERVER"
 	cat $outfile | ssh $BACKUP_SECONDARY_SERVER store_backup $host $bakname
 fi
