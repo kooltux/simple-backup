@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -e
+
+function info() { echo "$@" >&2; }
+function error() { echo "ERROR: $@" >&2; exit 1; }
+
+# read global config file
+conffile=$(cd $(dirname $0)/.. && pwd -P)/etc/backup.conf
+[[ ! -r $conffile ]] && error "Unable to read configuration file $conffile"
+. $conffile
+
+# check mandatory options
+[[ -z "$BACKUP_HOSTS_DIR" ]] && error "Invalid backup dir for hosts"
+
+# parse arguments
+host=$1
+[[ -z "$host" ]] && error "Invalid hostname"
+
+bakname=$2
+[[ -z "$bakname" ]] && error "Invalid backup name"
+
+# load host-specific config if any
+[[ -f $BACKUP_HOSTS_DIR/$host/backup.conf ]] && . $BACKUP_HOSTS_DIR/$host/backup.conf
+
+# move to backup dir
+cd $BACKUP_HOSTS_DIR
+
+# create per-host directory
+mkdir -p $host || error "Unable to create backup dir for $host"
+
+# save transmitted file
+outfile=$host/$(date +%Y%m%d_%H%M%S)_${bakname}
+info "Saving backup on $(hostname -f):$(pwd -P)/$outfile"
+if [[ -n $(which pv) ]];  then
+	$(which pv) -trafpb >$outfile
+elif [[ -n $(which buffer) ]]; then
+	time $(which buffer) -z 256K -o $outfile
+else
+	cat >$outfile
+fi
+info "Done"
+
+# remove old backups
+if [[ "$BACKUP_MAX_AGE" -gt 0 ]]; then
+	for x in $(find $host -type f -mtime +$BACKUP_MAX_AGE); do
+		info "Removing old backup $x"
+		rm $x
+	done
+fi
