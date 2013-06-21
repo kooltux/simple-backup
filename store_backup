@@ -24,6 +24,7 @@ bakname=$2
 [[ -f $BACKUP_HOSTS_DIR/$host/backup.conf ]] && . $BACKUP_HOSTS_DIR/$host/backup.conf
 
 # move to backup dir
+mkdir -p $BACKUP_HOSTS_DIR
 cd $BACKUP_HOSTS_DIR
 
 # create per-host directory
