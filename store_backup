@@ -48,3 +48,8 @@ if [[ "$BACKUP_MAX_AGE" -gt 0 ]]; then
 		rm $x
 	done
 fi
+
+# push last backup to secondary if defined
+if [[ -n "$BACKUP_SECONDARY_SERVER" ]]; then
+	cat $outfile | ssh $BACKUP_SECONDARY_SERVER store_backup $host $bakname
+fi
